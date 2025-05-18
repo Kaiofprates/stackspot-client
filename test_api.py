@@ -1,4 +1,5 @@
-from stackspot_client import StackSpotConfig, ResumeAnalyzer, StackSpotError
+from stackspot_client import StackSpotConfig, StackSpotError
+from resume_analyzer import ResumeAnalyzer
 
 def main():
     # Configuração do cliente
@@ -6,15 +7,13 @@ def main():
         base_url='https://genai-code-buddy-api.stackspot.com',
         auth_url='https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token',
         client_id='ff6049b1-1da9-40c3-bba7-51c6d095871a',
-        client_secret='HYxaZ7txm6xPItvc34587drgWvh7z8K4s72JGsNHIqAA6Ug5dOYJ7DE188Yq76Mq',
-        resume_analyzer_endpoint='v1/quick-commands/create-execution/resume-analyzer'
+        client_secret='HYxaZ7txm6xPItvc34587drgWvh7z8K4s72JGsNHIqAA6Ug5dOYJ7DE188Yq76Mq'
     )
     
     try:
         print("\n=== Configuração ===")
         print(f"URL Base: {config.base_url}")
         print(f"URL Auth: {config.auth_url}")
-        print(f"Endpoint: {config.resume_analyzer_endpoint}")
         print(f"Client ID: {config.client_id[:10]}...")
         
         # Criando instância do analisador de currículos
