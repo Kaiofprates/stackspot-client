@@ -170,3 +170,31 @@ class KnowledgeSources:
         except (RequestException, Timeout, ProxyError) as e:
             console.print(f"[bold red]Erro durante o upload: {e}[/bold red]")
             return None
+
+    def delete_all_files(self, ks_slug: str) -> bool:
+        """
+        Deleta todos os arquivos de uma fonte de conhecimento específica.
+
+        Args:
+            ks_slug (str): Slug da fonte de conhecimento
+
+        Returns:
+            bool: True se a operação foi bem sucedida, False caso contrário
+
+        Raises:
+            RequestException: Se houver erro na requisição
+            Timeout: Se a requisição exceder o tempo limite
+            ProxyError: Se houver erro com o proxy
+        """
+        console = Console()
+        try:
+            response = self.client._make_request(
+                method="DELETE",
+                endpoint=f"{self.endpoint}/{ks_slug}/objects"
+            )
+            response.raise_for_status()
+            console.print("[bold green]✓ Todos os arquivos foram deletados com sucesso![/bold green]")
+            return True
+        except (RequestException, Timeout, ProxyError) as e:
+            console.print(f"[bold red]Erro ao deletar os arquivos: {e}[/bold red]")
+            return False
