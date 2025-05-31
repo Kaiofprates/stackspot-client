@@ -4,6 +4,9 @@ import requests
 import os
 from requests.exceptions import RequestException, Timeout, ProxyError
 from docling.document_converter import DocumentConverter
+from rich.console import Console
+from rich.spinner import Spinner
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 
 class KnowledgeSources:
@@ -117,25 +120,53 @@ class KnowledgeSources:
             Timeout: Se a requisição exceder o tempo limite
             ProxyError: Se houver erro com o proxy
         """
+        console = Console()
+        
         try:
-            # Extrair o conteúdo markdown da URL usando docling
-            converter = DocumentConverter()
-            result = converter.convert(url)
-            markdown_content = result.document.export_to_markdown()
-            
-            # Criar um arquivo temporário com o conteúdo markdown
-            temp_file_path = f"temp_{ks_slug}.md"
-            with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
-                temp_file.write(markdown_content)
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console
+            ) as progress:
+                # Extrair o conteúdo markdown da URL usando docling
+                task = progress.add_task(
+                    "[cyan]Extraindo conteúdo da URL, essa operação pode levar alguns minutos...", 
+                    total=None
+                )
+                converter = DocumentConverter()
+                result = converter.convert(url)
+                markdown_content = result.document.export_to_markdown()
+                progress.update(task, completed=True)
+                
+                # Criar um arquivo temporário com o conteúdo markdown
+                task = progress.add_task(
+                    "[green]Preparando arquivo para upload...", 
+                    total=None
+                )
+                temp_file_path = f"temp_{ks_slug}.md"
+                with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
+                    temp_file.write(markdown_content)
+                progress.update(task, completed=True)
 
-            # Usar a função upload_file existente para fazer o upload
-            upload_id = self.upload_file(temp_file_path, ks_slug)
+                # Usar a função upload_file existente para fazer o upload
+                task = progress.add_task(
+                    "[yellow]Fazendo upload do arquivo...", 
+                    total=None
+                )
+                upload_id = self.upload_file(temp_file_path, ks_slug)
+                progress.update(task, completed=True)
 
-            # Remover o arquivo temporário
-            os.remove(temp_file_path)
+                # Remover o arquivo temporário
+                task = progress.add_task(
+                    "[blue]Limpando arquivos temporários...", 
+                    total=None
+                )
+                os.remove(temp_file_path)
+                progress.update(task, completed=True)
 
-            return upload_id
+                console.print("[bold green]✓ Upload concluído com sucesso![/bold green]")
+                return upload_id
 
         except (RequestException, Timeout, ProxyError) as e:
-            print(f"error: {e}")
+            console.print(f"[bold red]Erro durante o upload: {e}[/bold red]")
             return None
