@@ -3,6 +3,7 @@ from .client import StackSpotClient
 import requests
 import os
 from requests.exceptions import RequestException, Timeout, ProxyError
+from docling.document_converter import DocumentConverter
 
 
 class KnowledgeSources:
@@ -97,5 +98,44 @@ class KnowledgeSources:
                 response.raise_for_status()
                 return file_upload_id
         except (FileNotFoundError, RequestException, Timeout, ProxyError) as e:
+            print(f"error: {e}")
+            return None
+
+    def upload_from_url(self, url: str, ks_slug: str) -> Optional[str]:
+        """
+        Faz upload do conteúdo markdown extraído de uma URL para uma fonte de conhecimento.
+
+        Args:
+            url (str): URL do conteúdo a ser extraído
+            ks_slug (str): Slug da fonte de conhecimento
+
+        Returns:
+            Optional[str]: ID do upload do arquivo se bem sucedido, None caso contrário
+
+        Raises:
+            RequestException: Se houver erro na requisição
+            Timeout: Se a requisição exceder o tempo limite
+            ProxyError: Se houver erro com o proxy
+        """
+        try:
+            # Extrair o conteúdo markdown da URL usando docling
+            converter = DocumentConverter()
+            result = converter.convert(url)
+            markdown_content = result.document.export_to_markdown()
+            
+            # Criar um arquivo temporário com o conteúdo markdown
+            temp_file_path = f"temp_{ks_slug}.md"
+            with open(temp_file_path, 'w', encoding='utf-8') as temp_file:
+                temp_file.write(markdown_content)
+
+            # Usar a função upload_file existente para fazer o upload
+            upload_id = self.upload_file(temp_file_path, ks_slug)
+
+            # Remover o arquivo temporário
+            os.remove(temp_file_path)
+
+            return upload_id
+
+        except (RequestException, Timeout, ProxyError) as e:
             print(f"error: {e}")
             return None
