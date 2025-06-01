@@ -1,11 +1,13 @@
-from .client import StackSpotConfig, StackSpotClient, StackSpotError, AuthenticationError, APIError
+from .client import StackSpotClient, StackSpotConfig, StackSpotError, AuthenticationError, APIError
+from .quick_commands import QuickCommands
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 
 __all__ = [
-    'StackSpotConfig',
     'StackSpotClient',
+    'StackSpotConfig',
     'StackSpotError',
     'AuthenticationError',
-    'APIError'
+    'APIError',
+    'QuickCommands'
 ] 
