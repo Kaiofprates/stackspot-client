@@ -58,6 +58,49 @@ The `StackSpotConfig` class accepts the following parameters:
 
 ## Usage Examples
 
+### Knowledge Sources Management
+
+```python
+from stackspot_client import StackSpotConfig, StackSpotClient
+from stackspot_client.knowledge_sources import KnowledgeSources
+
+# Configure the client
+config = StackSpotConfig(
+    base_url='https://genai-code-buddy-api.stackspot.com',
+    client_id='your_client_id',
+    client_secret='your_client_secret'
+)
+
+# Create client instance
+client = StackSpotClient(config)
+
+# Create KnowledgeSources instance
+ks = KnowledgeSources(client)
+
+# Create a new knowledge source
+response = ks.create_ks(
+    slug="my-knowledge-source",
+    name="My Knowledge Source",
+    description="A knowledge source created via API",
+    type="snippet"  # or "api" or "custom"
+)
+
+# Upload a file
+file_upload_id = ks.upload_file(
+    file_path="./document.md",
+    ks_slug="my-knowledge-source"
+)
+
+# Upload content from a URL
+upload_id = ks.upload_from_url(
+    url="https://example.com/document",
+    ks_slug="my-knowledge-source"
+)
+
+# Delete all files from a knowledge source
+success = ks.delete_all_files("my-knowledge-source")
+```
+
 ### Basic Command Execution
 
 ```python
@@ -132,6 +175,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support with the StackSpot API, please refer to the [official documentation](https://docs.stackspot.com).
 
 ## Changelog
+
+### 0.1.2
+- Added support for Knowledge Sources management
+- Implemented knowledge source creation functionality
+- Added support for file uploads
+- Implemented URL content upload functionality
+- Added functionality to delete all files from a knowledge source
 
 ### 0.1.0
 - Initial release
