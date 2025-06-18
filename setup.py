@@ -11,7 +11,7 @@ setup(
         "requests>=2.31.0",
     ],
     extras_require={
-        "env": ["python-dotenv>=1.0.0"],
+        "env": ["python-dotenv>=1.1.0"],
     },
     author="KaiofPrates",
     author_email="kaiofprudencio@gmail.com",
@@ -25,4 +25,4 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-) 
+)

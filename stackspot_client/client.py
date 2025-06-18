@@ -72,6 +72,10 @@ class APIError(StackSpotError):
     """Erro na chamada da API"""
     pass
 
+class ValidationError(StackSpotError, ValueError):
+    """Validation error for input or configuration"""
+    pass
+
 class StackSpotClient:
     """Cliente base para interagir com a API do StackSpot"""
     
