@@ -214,6 +214,14 @@ For support with the StackSpot API, please refer to the [official documentation]
 
 ## Changelog
 
+### 0.1.4
+- Environment-based configuration as default (with `.env` support)
+- File upload validation: allowed formats and max size (10MB)
+- Integration with Docling for file and URL uploads (Markdown conversion)
+- Added `ValidationError` for input validation
+- Maintainer metadata (`eltonjosesouza`) in setup.py
+- General code and documentation cleanup
+
 ### 0.1.2
 - Added support for Knowledge Sources management
 - Implemented knowledge source creation functionality
