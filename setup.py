@@ -10,6 +10,9 @@ setup(
     install_requires=[
         "requests>=2.31.0",
     ],
+    extras_require={
+        "env": ["python-dotenv>=1.0.0"],
+    },
     author="KaiofPrates",
     author_email="kaiofprudencio@gmail.com",
     description="Cliente Python para a API do StackSpot",

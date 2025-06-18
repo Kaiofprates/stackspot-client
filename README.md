@@ -55,6 +55,50 @@ The `StackSpotConfig` class accepts the following parameters:
 | auth_url | str | No | https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token | Authentication URL |
 | max_retries | int | No | 30 | Maximum number of retries for result polling |
 | retry_interval | int | No | 5 | Interval between retries in seconds |
+| request_delay | float | No | 0.0 | Delay in seconds before each request |
+
+### Environment Variables & .env support
+
+You can configure the client using environment variables for improved security and flexibility. The following variables are supported:
+
+- `STACKSPOT_BASE_URL` (required)
+- `STACKSPOT_CLIENT_ID` (required)
+- `STACKSPOT_CLIENT_SECRET` (required)
+- `STACKSPOT_AUTH_URL` (optional)
+- `STACKSPOT_MAX_RETRIES` (optional)
+- `STACKSPOT_RETRY_INTERVAL` (optional)
+- `STACKSPOT_REQUEST_DELAY` (optional)
+
+You may use a `.env` file in your project root for local development:
+
+```env
+STACKSPOT_BASE_URL=https://genai-code-buddy-api.stackspot.com
+STACKSPOT_CLIENT_ID=your_client_id
+STACKSPOT_CLIENT_SECRET=your_client_secret
+STACKSPOT_AUTH_URL=https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token
+STACKSPOT_MAX_RETRIES=30
+STACKSPOT_RETRY_INTERVAL=5
+STACKSPOT_REQUEST_DELAY=0.0
+```
+
+#### Example: Loading from environment
+
+```python
+from stackspot_client import StackSpotConfig, StackSpotClient
+
+# Optionally load .env file (requires python-dotenv)
+from dotenv import load_dotenv
+load_dotenv()
+
+config = StackSpotConfig.from_env()
+client = StackSpotClient(config)
+```
+
+| client_id | str | Yes | - | Your StackSpot client ID |
+| client_secret | str | Yes | - | Your StackSpot client secret |
+| auth_url | str | No | https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token | Authentication URL |
+| max_retries | int | No | 30 | Maximum number of retries for result polling |
+| retry_interval | int | No | 5 | Interval between retries in seconds |
 
 ## Usage Examples
 
