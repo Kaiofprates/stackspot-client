@@ -15,6 +15,8 @@ setup(
     },
     author="KaiofPrates",
     author_email="kaiofprudencio@gmail.com",
+    maintainer="eltonjosesouza",
+    maintainer_email="github@eltonjose.com.br",
     description="Cliente Python para a API do StackSpot",
     long_description=long_description,
     long_description_content_type="text/markdown",
