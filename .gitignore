@@ -25,3 +25,33 @@ htmlcov/
 
 # Logs
 *.log 
+
+# pip cache
+pip-log.txt
+pip-delete-this-directory.txt
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# tox
+.tox/
+
+# pylint
+.pylint.d/
+
+# Local databases
+*.sqlite3
+*.db
+*.dump
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Lock files
+poetry.lock
+Pipfile.lock

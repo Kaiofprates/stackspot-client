@@ -10,8 +10,13 @@ setup(
     install_requires=[
         "requests>=2.31.0",
     ],
+    extras_require={
+        "env": ["python-dotenv>=1.1.0"],
+    },
     author="KaiofPrates",
     author_email="kaiofprudencio@gmail.com",
+    maintainer="eltonjosesouza",
+    maintainer_email="github@eltonjose.com.br",
     description="Cliente Python para a API do StackSpot",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -22,4 +27,4 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-) 
+)
