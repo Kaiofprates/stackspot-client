@@ -1,7 +1,7 @@
 import requests
 import time
 import os
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, Literal
 from dataclasses import dataclass
 import json
 
@@ -23,6 +23,8 @@ class StackSpotConfig:
       - STACKSPOT_MAX_RETRIES
       - STACKSPOT_RETRY_INTERVAL
       - STACKSPOT_REQUEST_DELAY
+      - STACKSPOT_KS_SLUG
+      - STACKSPOT_CODE_BUDDY_BASE_URL
     """
     base_url: str
     client_id: str
@@ -31,6 +33,9 @@ class StackSpotConfig:
     max_retries: int = 30
     retry_interval: int = 5
     request_delay: float = 0.0  # Delay em segundos antes de cada requisição
+    ks_slug: str = None  # Slug da Knowledge Source
+    code_buddy_base_url: str = None  # Endpoint base do Code Buddy
+    ks_type: Literal["api", "snippet", "custom"] = "custom"
 
     @classmethod
     def from_env(cls, load_dotenv_file: bool = True) -> 'StackSpotConfig':
@@ -38,8 +43,23 @@ class StackSpotConfig:
         Cria uma instância de StackSpotConfig lendo variáveis de ambiente.
         Se load_dotenv_file=True e python-dotenv estiver instalado, carrega variáveis do .env automaticamente.
         """
+        import os
         if load_dotenv_file and load_dotenv:
             load_dotenv()
+            return cls(
+                base_url=os.getenv('STACKSPOT_BASE_URL'),
+                client_id=os.getenv('STACKSPOT_CLIENT_ID'),
+                client_secret=os.getenv('STACKSPOT_CLIENT_SECRET'),
+                auth_url=os.getenv('STACKSPOT_AUTH_URL', 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token'),
+                max_retries=int(os.getenv('STACKSPOT_MAX_RETRIES', 30)),
+                retry_interval=int(os.getenv('STACKSPOT_RETRY_INTERVAL', 5)),
+                request_delay=float(os.getenv('STACKSPOT_REQUEST_DELAY', 0.0)),
+                ks_slug=os.getenv('STACKSPOT_KS_SLUG'),
+                code_buddy_base_url=os.getenv('STACKSPOT_CODE_BUDDY_BASE_URL'),
+                ks_type=os.getenv('STACKSPOT_KS_TYPE', 'custom')
+            )
+
+
         def _get_env(key, default=None, required=False, cast=str):
             value = os.getenv(key, default)
             if required and value is None:
@@ -58,6 +78,9 @@ class StackSpotConfig:
             max_retries=_get_env('STACKSPOT_MAX_RETRIES', 30, cast=int),
             retry_interval=_get_env('STACKSPOT_RETRY_INTERVAL', 5, cast=int),
             request_delay=_get_env('STACKSPOT_REQUEST_DELAY', 0.0, cast=float),
+            ks_slug=_get_env('STACKSPOT_KS_SLUG'),
+            code_buddy_base_url=_get_env('STACKSPOT_CODE_BUDDY_BASE_URL'),
+            ks_type=_get_env('STACKSPOT_KS_TYPE', 'custom')
         )
 
 class StackSpotError(Exception):
@@ -78,11 +101,11 @@ class ValidationError(StackSpotError, ValueError):
 
 class StackSpotClient:
     """Cliente base para interagir com a API do StackSpot"""
-    
+
     def __init__(self, config: StackSpotConfig):
         self.config = config
         self._token: Optional[str] = None
-    
+
     def authenticate(self) -> bool:
         """Realiza autenticação na API"""
         try:
@@ -91,7 +114,7 @@ class StackSpotClient:
                 'client_id': self.config.client_id,
                 'client_secret': self.config.client_secret
             }
-            
+
             response = requests.post(
                 self.config.auth_url,
                 data=auth_data,
@@ -100,19 +123,19 @@ class StackSpotClient:
                     'Accept': 'application/json'
                 }
             )
-            
+
             if response.status_code == 401:
                 raise AuthenticationError("Credenciais inválidas")
-            
+
             response.raise_for_status()
             data = response.json()
             self._token = data.get('access_token')
-            
+
             if not self._token:
                 raise AuthenticationError("Token não encontrado na resposta")
-                
+
             return True
-            
+
         except requests.exceptions.RequestException as e:
             if hasattr(e.response, 'text'):
                 raise APIError(f"Erro na requisição: {e.response.text}")
@@ -132,6 +155,8 @@ class StackSpotClient:
         if self.config.request_delay > 0:
             time.sleep(self.config.request_delay)
 
+        base_url = kwargs.pop('base_url', None)
+
         headers = {
             'Authorization': f'Bearer {self._token}',
             'Content-Type': 'application/json',
@@ -139,9 +164,11 @@ class StackSpotClient:
         }
         headers.update(kwargs.pop('headers', {}))
 
+        url = f"{base_url}/{endpoint}" if base_url else f"{self.config.base_url}/{endpoint}"
+
         response = requests.request(
             method,
-            f"{self.config.base_url}/{endpoint}",
+            url,
             headers=headers,
             **kwargs
         )
@@ -154,9 +181,9 @@ class StackSpotClient:
             headers['Authorization'] = f'Bearer {self._token}'
             response = requests.request(
                 method,
-                f"{self.config.base_url}/{endpoint}",
+                url,
                 headers=headers,
                 **kwargs
             )
 
-        return response 
+        return response

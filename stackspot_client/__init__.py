@@ -1,7 +1,7 @@
 from .client import StackSpotClient, StackSpotConfig, StackSpotError, AuthenticationError, APIError
 from .quick_commands import QuickCommands
 
-__version__ = "0.1.2"
+__version__ = "0.1.4"
 
 __all__ = [
     'StackSpotClient',
@@ -10,4 +10,4 @@ __all__ = [
     'AuthenticationError',
     'APIError',
     'QuickCommands'
-] 
+]
