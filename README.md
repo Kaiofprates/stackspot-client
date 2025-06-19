@@ -22,25 +22,49 @@ pip install stackspot-client
 ## Quick Start
 
 ```python
-from stackspot_client import StackSpotConfig, StackSpotClient
+import os
 
-# Configure the client
-config = StackSpotConfig(
-    base_url='https://genai-code-buddy-api.stackspot.com',
-    auth_url='https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token',
-    client_id='your_client_id',
-    client_secret='your_client_secret'
-)
+from dotenv import load_dotenv
+from stackspot_client import StackSpotConfig, StackSpotError, QuickCommands
 
-# Create client instance
-client = StackSpotClient(config)
+load_dotenv()
 
-# Execute a command
-execution_id = client.execute_command('your_command', {'data': 'example'})
+def main():
+    # Configuração do cliente
+    config = StackSpotConfig(base_url=os.getenv("base_url"),auth_url=os.getenv("auth_url"),
+        client_id=os.getenv("client_id"),client_secret=os.getenv("client_secret")
+    )
 
-# Get the result
-result = client.get_execution_result(execution_id)
-print(result)
+    try:
+
+        command = QuickCommands(config)
+
+        execution_id = command.execute_command(
+            
+         # Endpoint informed when creating the quick command
+        '/v1/quick-commands/create-execution/ola-mundo-',
+            ' O mundo é um moinho'
+        )
+
+        result = command.get_execution_result(execution_id)
+
+        if result:
+            print("\n📋 Resultado:")
+            print("=" * 50)
+            print(result['steps'][0]['step_result']['answer'])
+        else:
+            print("❌ Falha")
+
+    except StackSpotError as e:
+        print(f"\n❌ Erro: {str(e)}")
+    except Exception as e:
+        print(f"\n❌ Erro inesperado: {str(e)}")
+        import traceback
+        print("\nDetalhes do erro:")
+        print(traceback.format_exc())
+
+if __name__ == "__main__":
+    main()
 ```
 
 ## Configuration
@@ -137,44 +161,6 @@ ks.upload_file_with_docling(file_path, ks_slug)
 
 # Delete all files from a knowledge source
 success = ks.delete_all_files("my-knowledge-source")
-```
-
-### Basic Command Execution
-
-```python
-from stackspot_client import StackSpotConfig, StackSpotClient
-
-config = StackSpotConfig(
-    base_url='https://genai-code-buddy-api.stackspot.com',
-    client_id='your_client_id',
-    client_secret='your_client_secret'
-)
-
-client = StackSpotClient(config)
-
-# Execute a simple command
-execution_id = client.execute_command('analyze-code', {
-    'code': 'def hello(): print("Hello, World!")',
-    'language': 'python'
-})
-
-# Get the result
-result = client.get_execution_result(execution_id)
-print(result)
-```
-
-### Error Handling
-
-```python
-from stackspot_client import StackSpotClient, StackSpotConfig, AuthenticationError, APIError
-
-try:
-    client = StackSpotClient(config)
-    result = client.execute_command('invalid-command', {})
-except AuthenticationError as e:
-    print(f"Authentication failed: {e}")
-except APIError as e:
-    print(f"API error occurred: {e}")
 ```
 
 ## Response Format
