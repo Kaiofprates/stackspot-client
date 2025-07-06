@@ -80,6 +80,7 @@ The `StackSpotConfig` class accepts the following parameters:
 | max_retries | int | No | 30 | Maximum number of retries for result polling |
 | retry_interval | int | No | 5 | Interval between retries in seconds |
 | request_delay | float | No | 0.0 | Delay in seconds before each request |
+| proxies | dict | No | None | Proxy configuration for HTTP/HTTPS requests |
 
 ### Environment Variables & .env support
 
@@ -92,6 +93,8 @@ You can configure the client using environment variables for improved security a
 - `STACKSPOT_MAX_RETRIES` (optional)
 - `STACKSPOT_RETRY_INTERVAL` (optional)
 - `STACKSPOT_REQUEST_DELAY` (optional)
+- `STACKSPOT_PROXY_HTTP` (optional)
+- `STACKSPOT_PROXY_HTTPS` (optional)
 
 You may use a `.env` file in your project root for local development:
 
@@ -103,6 +106,8 @@ STACKSPOT_AUTH_URL=https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token
 STACKSPOT_MAX_RETRIES=30
 STACKSPOT_RETRY_INTERVAL=5
 STACKSPOT_REQUEST_DELAY=0.0
+STACKSPOT_PROXY_HTTP=http://proxy.example.com:8080
+STACKSPOT_PROXY_HTTPS=https://proxy.example.com:8080
 ```
 
 #### Example: Loading from environment
@@ -115,6 +120,30 @@ from dotenv import load_dotenv
 load_dotenv()
 
 config = StackSpotConfig.from_env()
+client = StackSpotClient(config)
+```
+
+#### Example: Using proxies
+
+```python
+from stackspot_client import StackSpotConfig, StackSpotClient
+
+# Configure proxies directly
+config = StackSpotConfig(
+    base_url="https://genai-code-buddy-api.stackspot.com",
+    client_id="your_client_id",
+    client_secret="your_client_secret",
+    proxies={
+        'http': 'http://proxy.example.com:8080',
+        'https': 'https://proxy.example.com:8080'
+    }
+)
+
+# Or configure via environment variables
+# STACKSPOT_PROXY_HTTP=http://proxy.example.com:8080
+# STACKSPOT_PROXY_HTTPS=https://proxy.example.com:8080
+config = StackSpotConfig.from_env()
+
 client = StackSpotClient(config)
 ```
 
@@ -199,6 +228,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support with the StackSpot API, please refer to the [official documentation](https://docs.stackspot.com).
 
 ## Changelog
+
+### 0.1.7
+- Added proxy support for HTTP/HTTPS requests
+- New `proxies` parameter in `StackSpotConfig` for direct proxy configuration
+- Environment variables support: `STACKSPOT_PROXY_HTTP` and `STACKSPOT_PROXY_HTTPS`
+- Proxy configuration applies to both authentication and API requests
+- Updated documentation with proxy usage examples
 
 ### 0.1.4
 - Environment-based configuration as default (with `.env` support)
