@@ -23,6 +23,8 @@ class StackSpotConfig:
       - STACKSPOT_MAX_RETRIES
       - STACKSPOT_RETRY_INTERVAL
       - STACKSPOT_REQUEST_DELAY
+      - STACKSPOT_PROXY_HTTP
+      - STACKSPOT_PROXY_HTTPS
     """
     base_url: str
     client_id: str
@@ -31,6 +33,7 @@ class StackSpotConfig:
     max_retries: int = 30
     retry_interval: int = 5
     request_delay: float = 0.0  # Delay em segundos antes de cada requisição
+    proxies: Optional[Dict[str, str]] = None  # Configuração de proxies
 
     @classmethod
     def from_env(cls, load_dotenv_file: bool = True) -> 'StackSpotConfig':
@@ -50,6 +53,18 @@ class StackSpotConfig:
                 except Exception:
                     raise ValueError(f"Não foi possível converter {key} para {cast}")
             return value
+        
+        # Configuração de proxies
+        proxy_http = _get_env('STACKSPOT_PROXY_HTTP')
+        proxy_https = _get_env('STACKSPOT_PROXY_HTTPS')
+        proxies = None
+        if proxy_http or proxy_https:
+            proxies = {}
+            if proxy_http:
+                proxies['http'] = proxy_http
+            if proxy_https:
+                proxies['https'] = proxy_https
+        
         return cls(
             base_url=_get_env('STACKSPOT_BASE_URL', required=True),
             client_id=_get_env('STACKSPOT_CLIENT_ID', required=True),
@@ -58,6 +73,7 @@ class StackSpotConfig:
             max_retries=_get_env('STACKSPOT_MAX_RETRIES', 30, cast=int),
             retry_interval=_get_env('STACKSPOT_RETRY_INTERVAL', 5, cast=int),
             request_delay=_get_env('STACKSPOT_REQUEST_DELAY', 0.0, cast=float),
+            proxies=proxies,
         )
 
 class StackSpotError(Exception):
@@ -98,7 +114,8 @@ class StackSpotClient:
                 headers={
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json'
-                }
+                },
+                proxies=self.config.proxies
             )
             
             if response.status_code == 401:
@@ -138,6 +155,10 @@ class StackSpotClient:
             'User-Agent': 'insomnia/11.0.1'
         }
         headers.update(kwargs.pop('headers', {}))
+
+        # Adiciona proxies se configurados
+        if self.config.proxies:
+            kwargs['proxies'] = self.config.proxies
 
         response = requests.request(
             method,
