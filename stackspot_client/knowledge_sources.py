@@ -11,7 +11,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 class KnowledgeSources:
     """Classe para gerenciar fontes de conhecimento no StackSpot"""
-    
+
     def __init__(self, client: StackSpotClient):
         self.client = client
         self.endpoint = "knowledge-sources"
@@ -72,6 +72,7 @@ class KnowledgeSources:
             Timeout: If the request times out
             ProxyError: If there is a proxy error
         """
+        import base64
         SUPPORTED_EXTENSIONS = {'.json', '.yml', '.yaml', '.md', '.txt', '.pdf', '.zip'}
         MAX_SIZE_MB = 10
         file_name = os.path.basename(file_path)
@@ -90,33 +91,32 @@ class KnowledgeSources:
                     if inner_ext and inner_ext not in SUPPORTED_EXTENSIONS - {'.zip'}:
                         raise ValidationError(f".zip contains unsupported file: {info.filename} ({inner_ext})")
         try:
-            with open(file_path, 'rb') as file:
-                upload_data = self.client._make_request(
-                    method="POST",
-                    endpoint="file-upload/form",
-                    json={
-                        "file_name": file_name,
-                        "target_id": ks_slug,
-                        "target_type": "KNOWLEDGE_SOURCE",
-                        "expiration": 600
-                    }
-                )
-                upload_data.raise_for_status()
-                upload_data = upload_data.json()
-                file_upload_id = upload_data['id']
-                files = {
-                    'key': (None, upload_data['form']['key']),
-                    'x-amz-algorithm': (None, upload_data['form']['x-amz-algorithm']),
-                    'x-amz-credential': (None, upload_data['form']['x-amz-credential']),
-                    'x-amz-date': (None, upload_data['form']['x-amz-date']),
-                    'x-amz-security-token': (None, upload_data['form']['x-amz-security-token']),
-                    'policy': (None, upload_data['form']['policy']),
-                    'x-amz-signature': (None, upload_data['form']['x-amz-signature']),
-                    'file': (file_name, file)
-                }
-                response = requests.post(upload_data['url'], files=files, timeout=10)
-                response.raise_for_status()
-                return file_upload_id
+            jwt = getattr(self.client, '_token', None)
+            if not jwt:
+                raise ValidationError("JWT token not found in StackSpotClient. Certifique-se de que o cliente está autenticado.")
+            # Decide reading mode (text or binary)
+            if ext in {'.md', '.txt', '.json', '.yml', '.yaml'}:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            else:
+                with open(file_path, 'rb') as f:
+                    content = base64.b64encode(f.read()).decode('utf-8')
+            payload = {"content": content}
+            url = f"https://genai-code-buddy-api.stackspot.com/v1/knowledge-sources/{ks_slug}/custom"
+            headers = {
+                "Authorization": f"Bearer {jwt}",
+                "Content-Type": "application/json"
+            }
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            if response.status_code == 403:
+                print("error: 403 Forbidden. Check your JWT token and permissions.")
+                return None
+            response.raise_for_status()
+            # Pode retornar o id ou o json inteiro, dependendo da resposta da API
+            try:
+                return response.json().get('id') or response.text
+            except Exception:
+                return response.text
         except (FileNotFoundError, RequestException, Timeout, ProxyError, ValidationError) as e:
             print(f"error: {e}")
             return None
@@ -203,7 +203,7 @@ class KnowledgeSources:
             ProxyError: Se houver erro com o proxy
         """
         console = Console()
-        
+
         try:
             with Progress(
                 SpinnerColumn(),
@@ -212,17 +212,17 @@ class KnowledgeSources:
             ) as progress:
                 # Extrair o conteúdo markdown da URL usando docling
                 task = progress.add_task(
-                    "[cyan]Extraindo conteúdo da URL, essa operação pode levar alguns minutos...", 
+                    "[cyan]Extraindo conteúdo da URL, essa operação pode levar alguns minutos...",
                     total=None
                 )
                 converter = DocumentConverter()
                 result = converter.convert(url)
                 markdown_content = result.document.export_to_markdown()
                 progress.update(task, completed=True)
-                
+
                 # Criar um arquivo temporário com o conteúdo markdown
                 task = progress.add_task(
-                    "[green]Preparando arquivo para upload...", 
+                    "[green]Preparando arquivo para upload...",
                     total=None
                 )
                 temp_file_path = f"temp_{ks_slug}.md"
@@ -232,7 +232,7 @@ class KnowledgeSources:
 
                 # Usar a função upload_file existente para fazer o upload
                 task = progress.add_task(
-                    "[yellow]Fazendo upload do arquivo...", 
+                    "[yellow]Fazendo upload do arquivo...",
                     total=None
                 )
                 upload_id = self.upload_file(temp_file_path, ks_slug)
@@ -240,7 +240,7 @@ class KnowledgeSources:
 
                 # Remover o arquivo temporário
                 task = progress.add_task(
-                    "[blue]Limpando arquivos temporários...", 
+                    "[blue]Limpando arquivos temporários...",
                     total=None
                 )
                 os.remove(temp_file_path)
